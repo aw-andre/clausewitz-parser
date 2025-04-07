@@ -1,0 +1,9 @@
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+COMMENT = _{ "#" ~ commentchar* }
+commentchar = _{ !NEWLINE ~ ANY }
+wordchar = _{ !(WHITESPACE | "#" | "=" | "{" | "}") ~ ANY }
+word = { wordchar+ }
+pair = { word ~ "=" ~ word }
+list = { "{" ~ (word | pair)+ ~ "}" }
+table = { word ~ "=" ~ list }
+file = { (pair | table)+ }
