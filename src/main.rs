@@ -1,8 +1,7 @@
-use pest::Parser;
-use pest_derive::Parser;
+mod cli;
+use clap::Parser;
 
-#[derive(Parser)]
-#[grammar = "euiv.pest"]
-pub struct EuivParser;
-
-fn main() {}
+fn main() {
+    let args = cli::Cli::parse();
+    args.validate();
+}
