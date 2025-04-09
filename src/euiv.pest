@@ -6,4 +6,4 @@ word = { wordchar+ }
 pair = { word ~ "=" ~ word }
 list = { "{" ~ (word | pair)+ ~ "}" }
 table = { word ~ "=" ~ list }
-file = { (pair | table)+ }
+file = { SOI ~ (pair | table)+ ~ EOI }
