@@ -1,9 +1,9 @@
-WHITESPACE = _{ " " | "\t" | NEWLINE }
-COMMENT = _{ "#" ~ commentchar* }
+WHITESPACE = _{ " " | "\t" }
+COMMENT = _{ "#" ~ commentchar* ~ NEWLINE* }
 commentchar = _{ !NEWLINE ~ ANY }
-wordchar = _{ !(WHITESPACE | "#" | "=" | "{" | "}") ~ ANY }
-word = { wordchar+ }
-pair = { word ~ "=" ~ word }
-list = { "{" ~ (word | pair)+ ~ "}" }
-table = { word ~ "=" ~ list }
-file = { SOI ~ (pair | table)+ ~ EOI }
+wordchar = _{ !(NEWLINE | WHITESPACE | "#" | "=" | "{" | "}") ~ ANY }
+key = { wordchar+ }
+value = { (wordchar+) | list }
+pair = { key ~ "=" ~ value }
+list = { "{" ~ NEWLINE* ~ (pair ~ NEWLINE*)+ ~ NEWLINE* ~ "}" }
+file = { SOI ~ (NEWLINE* ~ pair ~ NEWLINE*)+ ~ EOI }

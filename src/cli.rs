@@ -14,7 +14,7 @@ impl Cli {
         for file in &self.files {
             match fs::metadata(file) {
                 Ok(_) => (),
-                Err(_) => panic!("Error: {} is not a valid file", file),
+                Err(_) => panic!("Error: {} is not a valid file.", file),
             }
         }
     }
