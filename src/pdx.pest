@@ -1,10 +1,10 @@
-WHITESPACE = _{ " " | "\t" }
-COMMENT = _{ "#" ~ commentchar* ~ NEWLINE* }
+COMMENT = _{ "#" ~ commentchar* }
 commentchar = _{ !NEWLINE ~ ANY }
-wordchar = _{ !(NEWLINE | WHITESPACE | "#" | "=" | "{" | "}") ~ ANY }
-word = _{ wordchar+ }
+whitespace = _{ " " | "\t" | NEWLINE }
+wordchar = _{ !(whitespace | "#" | "=" | "{" | "}" | "\"") ~ ANY }
+word = _{ (wordchar+) | ("\"" ~ whitespace* ~ (wordchar+ ~ whitespace*)+ ~ "\"") }
 key = { word }
 value = { word | list }
-pair = { key ~ "=" ~ value }
-list = { "{" ~ NEWLINE* ~ (pair ~ NEWLINE*)+ ~ "}" }
-file = { SOI ~ NEWLINE* ~ (pair ~ NEWLINE*)+ ~ EOI }
+pair = { key ~ whitespace* ~ "=" ~ whitespace* ~ value }
+list = { "{" ~ whitespace* ~ ((pair | word) ~ whitespace*)* ~ "}" }
+file = { SOI ~ whitespace* ~ (pair ~ whitespace*)* ~ EOI }
