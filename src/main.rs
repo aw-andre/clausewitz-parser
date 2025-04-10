@@ -1,4 +1,5 @@
 mod cli;
+mod database;
 mod processor;
 use clap::Parser;
 use pest::iterators::Pair;
@@ -13,6 +14,6 @@ fn main() {
         let parsedfile = unparsedfile.process();
         let parsed = parsedfile.parsed;
 
-        println!("{:#?}", parsed);
+        database::insert_file(file, parsed);
     }
 }
