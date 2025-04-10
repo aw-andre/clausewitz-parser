@@ -2,8 +2,9 @@ WHITESPACE = _{ " " | "\t" }
 COMMENT = _{ "#" ~ commentchar* ~ NEWLINE* }
 commentchar = _{ !NEWLINE ~ ANY }
 wordchar = _{ !(NEWLINE | WHITESPACE | "#" | "=" | "{" | "}") ~ ANY }
-key = { wordchar+ }
-value = { (wordchar+) | list }
+word = _{ wordchar+ }
+key = { word }
+value = { word | list }
 pair = { key ~ "=" ~ value }
-list = { "{" ~ NEWLINE* ~ (pair ~ NEWLINE*)+ ~ NEWLINE* ~ "}" }
-file = { SOI ~ (NEWLINE* ~ pair ~ NEWLINE*)+ ~ EOI }
+list = { "{" ~ NEWLINE* ~ (pair ~ NEWLINE*)+ ~ "}" }
+file = { SOI ~ NEWLINE* ~ (pair ~ NEWLINE*)+ ~ EOI }
