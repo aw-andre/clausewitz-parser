@@ -16,8 +16,11 @@ impl UnparsedFile<'_> {
     pub fn new(filename: &str) -> UnparsedFile {
         UnparsedFile {
             filename,
-            unparsed: fs::read_to_string(filename)
-                .unwrap_or_else(|e| panic!("Error: {} could not be read: {}", filename, e)),
+            unparsed: String::from_utf8_lossy(
+                &fs::read(filename)
+                    .unwrap_or_else(|e| panic!("Error: {} could not be read: {}", filename, e)),
+            )
+            .into_owned(),
         }
     }
 
