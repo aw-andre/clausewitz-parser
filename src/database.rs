@@ -1,4 +1,4 @@
-use super::{Pair, Rule};
-use sqlx;
+use super::ParsedFile;
+use sqlx::{Pool, Postgres};
 
-pub fn insert_file(file: &str, parsed: Pair<Rule>) {}
+pub fn insert_file(parsedfile: ParsedFile, pool: &Pool<Postgres>) {}

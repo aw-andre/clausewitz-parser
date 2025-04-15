@@ -8,5 +8,5 @@ clap = { version = "4.5.35", features = ["debug", "derive"] }
 dotenvy = "0.15.7"
 pest = { version = "2.8.0", features = ["pretty-print"] }
 pest_derive = "2.8.0"
-sqlx = "0.8.3"
-tokio = "1.44.2"
+sqlx = { version = "0.8.3", features = ["postgres"] }
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
