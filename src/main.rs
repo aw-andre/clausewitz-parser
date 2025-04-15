@@ -9,14 +9,12 @@ use sqlx::postgres::PgPool;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
-    // load database URL and connect
-    dotenvy::dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL").expect("Error: DATABASE_URL is not set");
-    let pool = PgPool::connect(&database_url).await?;
-
-    // read filenames from CLI and validate
+    // read from CLI and validate
     let args = cli::Cli::parse();
     args.validate();
+
+    // load database URL and connect
+    let pool = PgPool::connect(&args.database_url).await?;
 
     // parse files and add data to database
     for file in &args.files {

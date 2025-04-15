@@ -343,7 +343,6 @@ name = "euiv-parser"
 version = "0.1.0"
 dependencies = [
  "clap",
- "dotenvy",
  "pest",
  "pest_derive",
  "sqlx",
