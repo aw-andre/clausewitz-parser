@@ -2,13 +2,13 @@ use super::parser::*;
 use sqlx::{Pool, Postgres};
 
 pub async fn initialize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
+    sqlx::query!("DROP TABLE IF EXISTS euiv")
+        .execute(pool)
+        .await?;
     sqlx::query!("DROP SEQUENCE IF EXISTS euiv_childseq")
         .execute(pool)
         .await?;
     sqlx::query!("CREATE SEQUENCE euiv_childseq")
-        .execute(pool)
-        .await?;
-    sqlx::query!("DROP TABLE IF EXISTS euiv")
         .execute(pool)
         .await?;
     sqlx::query!(

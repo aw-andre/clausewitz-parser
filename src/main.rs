@@ -13,7 +13,9 @@ async fn main() -> Result<(), sqlx::Error> {
     args.validate();
 
     // load database URL, connect, and initialize
-    let pool = Arc::new(PgPool::connect(&args.database_url).await?);
+    dotenvy::dotenv().ok();
+    let database_url = std::env::var("DATABASE_URL").expect("Error: DATABASE_URL is not set");
+    let pool = Arc::new(PgPool::connect(&database_url).await?);
     database::initialize(&pool).await?;
 
     // parse files and add data to database
