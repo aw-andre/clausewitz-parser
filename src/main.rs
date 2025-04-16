@@ -1,11 +1,10 @@
 mod cli;
 mod database;
-mod processor;
+mod parser;
 
 use clap::Parser;
-use pest::iterators::Pair;
-use processor::{ParsedFile, Rule, UnparsedFile};
 use sqlx::postgres::PgPool;
+use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -13,15 +12,22 @@ async fn main() -> Result<(), sqlx::Error> {
     let args = cli::Cli::parse();
     args.validate();
 
-    // load database URL and connect
-    let pool = PgPool::connect(&args.database_url).await?;
+    // load database URL, connect, and initialize
+    let pool = Arc::new(PgPool::connect(&args.database_url).await?);
+    database::initialize(&pool).await?;
 
     // parse files and add data to database
-    for file in &args.files {
-        let unparsedfile = UnparsedFile::new(file);
-        let parsedfile = unparsedfile.process();
+    let mut handles = Vec::new();
+    for file in args.files {
+        let pool = pool.clone();
+        handles.push(tokio::spawn(async move {
+            database::insert_file(file, &pool);
+        }));
+    }
 
-        database::insert_file(parsedfile, &pool);
+    // finish all jobs
+    for job in handles {
+        job.await.unwrap();
     }
     Ok(())
 }
