@@ -9,4 +9,4 @@ pair = { key ~ whitespace* ~ "=" ~ whitespace* ~ value }
 value = { word | list }
 key = { word }
 word = @{ ("\"" ~ quotechar* ~ "\"") | (wordchar+) }
-COMMENT = _{ "#" ~ commentchar* }
+COMMENT = { "#" ~ commentchar* }

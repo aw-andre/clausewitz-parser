@@ -15,21 +15,18 @@ async fn main() -> Result<(), sqlx::Error> {
     // load database URL, connect, and initialize
     dotenvy::dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("Error: DATABASE_URL is not set");
-    let pool = Arc::new(PgPool::connect(&database_url).await?);
+    let pool = PgPool::connect(&database_url).await?;
     database::initialize(&pool).await?;
 
     // parse files and add data to database
     let mut handles = Vec::new();
     for file in args.files {
-        let pool = pool.clone();
-        handles.push(tokio::spawn(async move {
-            database::insert_file(file, &pool);
-        }));
+        handles.push(database::insert_filename(file, pool.clone()));
     }
 
     // finish all jobs
     for job in handles {
-        job.await.unwrap();
+        job.await?;
     }
     Ok(())
 }
