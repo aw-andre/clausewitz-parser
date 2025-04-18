@@ -60,16 +60,65 @@ async fn insert(
 ) -> Result<(), sqlx::Error> {
     for ident in parsed.into_inner() {
         match ident.as_rule() {
-            Rule::quotechar | Rule::commentchar | Rule::wordchar | Rule::whitespace | Rule::EOI => {
-                ()
-            }
-            Rule::file => insert(ident, pool.clone()).await?,
-            Rule::list => insert_list(ident, pool.clone()).await?,
-            Rule::pair => insert_pair(ident, pool.clone()).await?,
-            Rule::value => insert_value(ident, pool.clone()).await?,
-            Rule::key => insert_key(ident, pool.clone()).await?,
-            Rule::word => insert_word(ident, pool.clone()).await?,
-            Rule::COMMENT => insert_COMMENT(ident, pool.clone()).await?,
+            Rule::file => Box::pin(insert(ident, pool.clone(), parent_id, group_id)).await?,
+            Rule::list => Box::pin(insert(ident, pool.clone(), parent_id, group_id)).await?,
+            Rule::pair => Box::pin(insert_pair(ident, pool.clone(), parent_id, group_id)).await?,
+            _ => (),
+        }
+    }
+    Ok(())
+}
+
+/// Gets the value of a word-based identifier.
+fn get_value(parsed: Pair<'_, Rule>) -> Option<&str> {
+    let mut value = None;
+    for ident in parsed.into_inner() {
+        // there can only be one ident in parsed
+        value = match ident.as_rule() {
+            Rule::key | Rule::value => get_value(ident),
+            Rule::word => Some(ident.as_str()),
+            _ => None,
+        }
+    }
+    value
+}
+
+async fn insert_pair(
+    parsed: Pair<'_, Rule>,
+    pool: Pool<Postgres>,
+    parent_id: i32,
+    group_id: i32,
+) -> Result<(), sqlx::Error> {
+    let mut key = None;
+    let mut possible_value = None;
+    let mut possible_list = None;
+    for ident in parsed.into_inner() {
+        match ident.as_rule() {
+            Rule::key => key = get_value(ident),
+            Rule::value => possible_value = get_value(ident),
+            Rule::list => possible_list = Some(ident),
+            _ => (),
+        }
+    }
+
+    match possible_value {
+        // value is a list
+        None => {
+            query!(
+                "INSERT INTO euiv (group_id, key, parent_id) VALUES ($1, $2, $3)",
+                group_id,
+                key,
+                parent_id
+            )
+            .execute(&pool)
+            .await?;
+            // TODO: insert list
+        }
+        // value is a word
+        Some(value) => {
+            query!("INSERT INTO euiv (group_id, key, value, parent_id, child_id) VALUES ($1, $2, $3, $4, $5)", group_id, key, value, parent_id, None::<i32>)
+                .execute(&pool)
+                .await?;
         }
     }
     Ok(())
