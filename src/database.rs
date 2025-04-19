@@ -15,8 +15,8 @@ pub async fn initialize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
             CREATE UNLOGGED TABLE euiv (
                 primary_id SERIAL PRIMARY KEY,
                 group_id INT,
-                key VARCHAR(255) NOT NULL,
-                value VARCHAR(255),
+                key TEXT NOT NULL,
+                value TEXT,
                 parent_id INT,
                 child_id INT DEFAULT nextval('euiv_childseq')
             )
