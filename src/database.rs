@@ -69,34 +69,27 @@ async fn insert(
     Ok(())
 }
 
-/// Gets the value of a word-based identifier.
-fn get_value(parsed: Pair<'_, Rule>) -> Option<&str> {
-    let mut value = None;
-    for ident in parsed.into_inner() {
-        // there can only be one ident in parsed
-        value = match ident.as_rule() {
-            Rule::key | Rule::value => get_value(ident),
-            Rule::word => Some(ident.as_str()),
-            _ => None,
-        }
-    }
-    value
-}
-
 async fn insert_pair(
     parsed: Pair<'_, Rule>,
     pool: Pool<Postgres>,
     parent_id: i32,
     group_id: i32,
 ) -> Result<(), sqlx::Error> {
-    let mut key = None;
+    let mut key = "";
     let mut possible_value = None;
     let mut possible_list = None;
     for ident in parsed.into_inner() {
         match ident.as_rule() {
-            Rule::key => key = get_value(ident),
-            Rule::value => possible_value = get_value(ident),
-            Rule::list => possible_list = Some(ident),
+            Rule::key => key = ident.as_str(),
+            Rule::value => {
+                for inner in ident.into_inner() {
+                    match inner.as_rule() {
+                        Rule::word => possible_value = Some(inner.as_str()),
+                        Rule::list => possible_list = Some(inner),
+                        _ => (),
+                    }
+                }
+            }
             _ => (),
         }
     }
@@ -112,8 +105,17 @@ async fn insert_pair(
             )
             .execute(&pool)
             .await?;
-            // TODO: insert list
+
+            let ids = query!("SELECT primary_id, child_id FROM euiv WHERE key = $1", key)
+                .fetch_one(&pool)
+                .await?;
+
+            let parent_id = ids.primary_id;
+            let group_id = ids.child_id.unwrap();
+
+            insert(possible_list.unwrap(), pool.clone(), parent_id, group_id).await?;
         }
+
         // value is a word
         Some(value) => {
             query!("INSERT INTO euiv (group_id, key, value, parent_id, child_id) VALUES ($1, $2, $3, $4, $5)", group_id, key, value, parent_id, None::<i32>)

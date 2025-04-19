@@ -4,7 +4,6 @@ mod parser;
 
 use clap::Parser;
 use sqlx::postgres::PgPool;
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
