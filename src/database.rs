@@ -106,7 +106,7 @@ async fn insert_pair(
             .execute(&pool)
             .await?;
 
-            let ids = query!("SELECT primary_id, child_id FROM euiv WHERE key = $1", key)
+            let ids = query!("SELECT primary_id, child_id FROM euiv WHERE group_id = $1 AND key = $2 AND parent_id = $3", group_id, key, parent_id)
                 .fetch_one(&pool)
                 .await?;
 
