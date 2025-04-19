@@ -34,12 +34,8 @@ pub async fn insert_filename(file: String, pool: Pool<Postgres>) -> Result<(), s
     let filename = parsedfile.filename;
     let parsed = parsedfile.parsed;
 
-    query!("INSERT INTO euiv (key) VALUES ($1)", filename)
-        .execute(&pool)
-        .await?;
-
     let ids = query!(
-        "SELECT primary_id, child_id FROM euiv WHERE key = $1",
+        "INSERT INTO euiv (key) VALUES ($1) RETURNING primary_id, child_id",
         filename
     )
     .fetch_one(&pool)
@@ -97,18 +93,14 @@ async fn insert_pair(
     match possible_value {
         // value is a list
         None => {
-            query!(
-                "INSERT INTO euiv (group_id, key, parent_id) VALUES ($1, $2, $3)",
+            let ids = query!(
+                "INSERT INTO euiv (group_id, key, parent_id) VALUES ($1, $2, $3) RETURNING primary_id, child_id",
                 group_id,
                 key,
                 parent_id
             )
-            .execute(&pool)
+            .fetch_one(&pool)
             .await?;
-
-            let ids = query!("SELECT primary_id, child_id FROM euiv WHERE group_id = $1 AND key = $2 AND parent_id = $3", group_id, key, parent_id)
-                .fetch_one(&pool)
-                .await?;
 
             let parent_id = ids.primary_id;
             let group_id = ids.child_id.unwrap();
