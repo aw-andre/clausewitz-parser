@@ -27,5 +27,7 @@ async fn main() -> Result<(), sqlx::Error> {
     for job in handles {
         job.await?;
     }
+
+    database::finalize(&pool).await?;
     Ok(())
 }

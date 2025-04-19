@@ -27,6 +27,22 @@ pub async fn initialize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+pub async fn finalize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
+    query!("CREATE INDEX group_idx ON euiv(group_id)")
+        .execute(pool)
+        .await?;
+    query!("CREATE INDEX key_idx ON euiv(key)")
+        .execute(pool)
+        .await?;
+    query!("CREATE INDEX parent_idx ON euiv(parent_id)")
+        .execute(pool)
+        .await?;
+    query!("CREATE UNIQUE INDEX child_idx ON euiv(child_id)")
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 pub async fn insert_filename(file: String, pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
     let unparsedfile = UnparsedFile::new(&file);
     let parsedfile = unparsedfile.process();
