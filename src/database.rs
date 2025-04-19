@@ -14,12 +14,11 @@ pub async fn initialize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
         "
             CREATE TABLE euiv (
                 primary_id SERIAL PRIMARY KEY,
-                group_id INT REFERENCES euiv(child_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+                group_id INT,
                 key VARCHAR(255) NOT NULL,
                 value VARCHAR(255),
-                parent_id INT REFERENCES euiv(primary_id) ON DELETE RESTRICT ON UPDATE CASCADE,
-                child_id INT UNIQUE DEFAULT nextval('euiv_childseq')
-                CONSTRAINT value_or_child_id_not_null CHECK (value IS NOT NULL OR child_id IS NOT NULL)
+                parent_id INT,
+                child_id INT DEFAULT nextval('euiv_childseq')
             )
         ",
     )
