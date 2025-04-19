@@ -102,6 +102,7 @@ async fn insert_pair(
             .fetch_one(&pool)
             .await?;
 
+            println!("{:#?}", ids);
             let parent_id = ids.primary_id;
             let group_id = ids.child_id.unwrap();
 
