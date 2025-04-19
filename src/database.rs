@@ -12,7 +12,7 @@ pub async fn initialize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
         .await?;
     query!(
         "
-            CREATE TABLE euiv (
+            CREATE UNLOGGED TABLE euiv (
                 primary_id SERIAL PRIMARY KEY,
                 group_id INT,
                 key VARCHAR(255) NOT NULL,
