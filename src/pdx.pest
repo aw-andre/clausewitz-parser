@@ -4,9 +4,9 @@ wordchar = _{ !(whitespace | "=" | "{" | "}" | "#" | "\"") ~ ANY }
 whitespace = _{ " " | "\t" | NEWLINE }
 
 file = { SOI ~ whitespace* ~ ((list | pair | word) ~ whitespace*)* ~ EOI }
-list = { "{" ~ whitespace* ~ ((list | pair | word) ~ whitespace*)* ~ "}" }
+list = { ( "{" ~ whitespace* ~ ((list | pair | word) ~ whitespace*)* ~ "}" ) | ( "\"" ~ whitespace* ~ (pair ~ whitespace*)* ~ "\"" ) }
 pair = { key ~ whitespace* ~ "=" ~ whitespace* ~ value }
-value = { word | list }
+value = { list | word }
 key = { word }
 word = @{ ("\"" ~ quotechar* ~ "\"") | (wordchar+) }
 COMMENT = { "#" ~ commentchar* }
