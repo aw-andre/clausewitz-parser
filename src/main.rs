@@ -15,19 +15,24 @@ async fn main() -> Result<(), sqlx::Error> {
     dotenvy::dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("Error: DATABASE_URL is not set");
     let pool = PgPool::connect(&database_url).await?;
-    database::initialize(pool.clone()).await?;
 
-    // parse files and add data to database
-    let mut handles = Vec::new();
-    for file in args.files {
-        handles.push(database::insert_filename(file, pool.clone()));
+    if args.initialize {
+        database::initialize(pool.clone()).await?;
     }
 
-    // finish all jobs
-    for job in handles {
-        job.await?;
+    if args.add {
+        let mut handles = Vec::new();
+        for file in args.files {
+            handles.push(database::insert_filename(file, pool.clone()));
+        }
+
+        for job in handles {
+            job.await?;
+        }
     }
 
-    database::finalize(pool.clone()).await?;
+    if args.finalize {
+        database::finalize(pool.clone()).await?;
+    }
     Ok(())
 }
