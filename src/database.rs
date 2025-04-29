@@ -31,10 +31,16 @@ pub async fn initialize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
 }
 
 pub async fn finalize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
+    query!("CREATE INDEX game_idx ON gamefiles(game)")
+        .execute(&pool)
+        .await?;
     query!("CREATE INDEX group_idx ON gamefiles(group_id)")
         .execute(&pool)
         .await?;
-    query!("CREATE INDEX key_idx ON gamefiles(key)")
+    query!("CREATE INDEX key_idx ON gamefiles(game, key)")
+        .execute(&pool)
+        .await?;
+    query!("CREATE INDEX value_idx ON gamefiles(game, value)")
         .execute(&pool)
         .await?;
     query!("CREATE INDEX parent_idx ON gamefiles(parent_id)")
