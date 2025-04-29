@@ -3,22 +3,25 @@ use pest::iterators::Pair;
 use sqlx::{Pool, Postgres, query};
 
 pub async fn initialize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
-    query!("DROP TABLE IF EXISTS euiv").execute(&pool).await?;
-    query!("DROP SEQUENCE IF EXISTS euiv_childseq")
+    query!("DROP TABLE IF EXISTS gamefiles")
         .execute(&pool)
         .await?;
-    query!("CREATE SEQUENCE euiv_childseq")
+    query!("DROP SEQUENCE IF EXISTS gamefiles_childseq")
+        .execute(&pool)
+        .await?;
+    query!("CREATE SEQUENCE gamefiles_childseq")
         .execute(&pool)
         .await?;
     query!(
         "
-            CREATE UNLOGGED TABLE euiv (
+            CREATE UNLOGGED TABLE gamefiles (
+                game TEXT NOT NULL,
                 primary_id SERIAL PRIMARY KEY,
                 group_id INT,
                 key TEXT NOT NULL,
                 value TEXT,
                 parent_id INT,
-                child_id INT DEFAULT nextval('euiv_childseq')
+                child_id INT DEFAULT nextval('gamefiles_childseq')
             )
         ",
     )
@@ -28,29 +31,34 @@ pub async fn initialize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
 }
 
 pub async fn finalize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
-    query!("CREATE INDEX group_idx ON euiv(group_id)")
+    query!("CREATE INDEX group_idx ON gamefiles(group_id)")
         .execute(&pool)
         .await?;
-    query!("CREATE INDEX key_idx ON euiv(key)")
+    query!("CREATE INDEX key_idx ON gamefiles(key)")
         .execute(&pool)
         .await?;
-    query!("CREATE INDEX parent_idx ON euiv(parent_id)")
+    query!("CREATE INDEX parent_idx ON gamefiles(parent_id)")
         .execute(&pool)
         .await?;
-    query!("CREATE UNIQUE INDEX child_idx ON euiv(child_id)")
+    query!("CREATE UNIQUE INDEX child_idx ON gamefiles(child_id)")
         .execute(&pool)
         .await?;
     Ok(())
 }
 
-pub async fn insert_filename(file: String, pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
+pub async fn insert_filename(
+    pool: Pool<Postgres>,
+    file: String,
+    game: String,
+) -> Result<(), sqlx::Error> {
     let unparsedfile = UnparsedFile::new(&file);
     let parsedfile = unparsedfile.process();
     let filename = parsedfile.filename;
     let parsed = parsedfile.parsed;
 
     let ids = query!(
-        "INSERT INTO euiv (key) VALUES ($1) RETURNING primary_id, child_id",
+        "INSERT INTO gamefiles (game, key) VALUES ($1, $2) RETURNING primary_id, child_id",
+        game,
         filename
     )
     .fetch_one(&pool)
@@ -59,21 +67,49 @@ pub async fn insert_filename(file: String, pool: Pool<Postgres>) -> Result<(), s
     let parent_id = ids.primary_id;
     let group_id = ids.child_id.unwrap();
 
-    insert(parsed, pool.clone(), parent_id, group_id).await?;
+    insert(parsed, pool.clone(), game, parent_id, group_id).await?;
     Ok(())
 }
 
 async fn insert(
     parsed: Pair<'_, Rule>,
     pool: Pool<Postgres>,
+    game: String,
     parent_id: i32,
     group_id: i32,
 ) -> Result<(), sqlx::Error> {
     for ident in parsed.into_inner() {
         match ident.as_rule() {
-            Rule::file => Box::pin(insert(ident, pool.clone(), parent_id, group_id)).await?,
-            Rule::list => Box::pin(insert(ident, pool.clone(), parent_id, group_id)).await?,
-            Rule::pair => Box::pin(insert_pair(ident, pool.clone(), parent_id, group_id)).await?,
+            Rule::file => {
+                Box::pin(insert(
+                    ident,
+                    pool.clone(),
+                    game.clone(),
+                    parent_id,
+                    group_id,
+                ))
+                .await?
+            }
+            Rule::list => {
+                Box::pin(insert(
+                    ident,
+                    pool.clone(),
+                    game.clone(),
+                    parent_id,
+                    group_id,
+                ))
+                .await?
+            }
+            Rule::pair => {
+                Box::pin(insert_pair(
+                    ident,
+                    pool.clone(),
+                    game.clone(),
+                    parent_id,
+                    group_id,
+                ))
+                .await?
+            }
             _ => (),
         }
     }
@@ -83,6 +119,7 @@ async fn insert(
 async fn insert_pair(
     parsed: Pair<'_, Rule>,
     pool: Pool<Postgres>,
+    game: String,
     parent_id: i32,
     group_id: i32,
 ) -> Result<(), sqlx::Error> {
@@ -109,7 +146,8 @@ async fn insert_pair(
         // value is a list
         None => {
             let ids = query!(
-                "INSERT INTO euiv (group_id, key, parent_id) VALUES ($1, $2, $3) RETURNING primary_id, child_id",
+                "INSERT INTO gamefiles (game, group_id, key, parent_id) VALUES ($1, $2, $3, $4) RETURNING primary_id, child_id",
+                game,
                 group_id,
                 key,
                 parent_id
@@ -121,12 +159,19 @@ async fn insert_pair(
             let parent_id = ids.primary_id;
             let group_id = ids.child_id.unwrap();
 
-            insert(possible_list.unwrap(), pool.clone(), parent_id, group_id).await?;
+            insert(
+                possible_list.unwrap(),
+                pool.clone(),
+                game.clone(),
+                parent_id,
+                group_id,
+            )
+            .await?;
         }
 
         // value is a word
         Some(value) => {
-            query!("INSERT INTO euiv (group_id, key, value, parent_id, child_id) VALUES ($1, $2, $3, $4, $5)", group_id, key, value, parent_id, None::<i32>)
+            query!("INSERT INTO gamefiles (game, group_id, key, value, parent_id, child_id) VALUES ($1, $2, $3, $4, $5, $6)", game, group_id, key, value, parent_id, None::<i32>)
                 .execute(&pool)
                 .await?;
         }

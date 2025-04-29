@@ -6,7 +6,7 @@ use std::fs;
 pub struct Cli {
     /// Game name
     #[arg(long, required = true)]
-    pub name: String,
+    pub game: String,
 
     /// Initialize database
     #[arg(long, required_unless_present_any = ["add", "delete", "finalize"])]
