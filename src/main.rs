@@ -23,11 +23,7 @@ async fn main() -> Result<(), sqlx::Error> {
     if args.add {
         let mut handles = Vec::new();
         for file in args.files {
-            handles.push(database::insert_filename(
-                pool.clone(),
-                file,
-                args.game.clone(),
-            ));
+            handles.push(database::insert_file(pool.clone(), file, args.game.clone()));
         }
 
         for job in handles {
@@ -35,7 +31,9 @@ async fn main() -> Result<(), sqlx::Error> {
         }
     }
 
-    // TODO args.delete
+    if args.delete {
+        database::delete_game(pool.clone(), args.game.clone()).await?;
+    }
 
     if args.finalize {
         database::finalize(pool.clone()).await?;

@@ -46,7 +46,7 @@ pub async fn finalize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-pub async fn insert_filename(
+pub async fn insert_file(
     pool: Pool<Postgres>,
     file: String,
     game: String,
@@ -176,5 +176,12 @@ async fn insert_pair(
                 .await?;
         }
     }
+    Ok(())
+}
+
+pub async fn delete_game(pool: Pool<Postgres>, game: String) -> Result<(), sqlx::Error> {
+    query!("DELETE FROM gamefiles WHERE game = $1", game)
+        .execute(&pool)
+        .await?;
     Ok(())
 }
