@@ -2,13 +2,13 @@ use super::parser::*;
 use pest::iterators::Pair;
 use sqlx::{Pool, Postgres, query};
 
-pub async fn initialize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
-    query!("DROP TABLE IF EXISTS euiv").execute(pool).await?;
+pub async fn initialize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
+    query!("DROP TABLE IF EXISTS euiv").execute(&pool).await?;
     query!("DROP SEQUENCE IF EXISTS euiv_childseq")
-        .execute(pool)
+        .execute(&pool)
         .await?;
     query!("CREATE SEQUENCE euiv_childseq")
-        .execute(pool)
+        .execute(&pool)
         .await?;
     query!(
         "
@@ -22,23 +22,23 @@ pub async fn initialize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
             )
         ",
     )
-    .execute(pool)
+    .execute(&pool)
     .await?;
     Ok(())
 }
 
-pub async fn finalize(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
+pub async fn finalize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
     query!("CREATE INDEX group_idx ON euiv(group_id)")
-        .execute(pool)
+        .execute(&pool)
         .await?;
     query!("CREATE INDEX key_idx ON euiv(key)")
-        .execute(pool)
+        .execute(&pool)
         .await?;
     query!("CREATE INDEX parent_idx ON euiv(parent_id)")
-        .execute(pool)
+        .execute(&pool)
         .await?;
     query!("CREATE UNIQUE INDEX child_idx ON euiv(child_id)")
-        .execute(pool)
+        .execute(&pool)
         .await?;
     Ok(())
 }
