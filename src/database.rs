@@ -52,7 +52,7 @@ pub async fn finalize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-pub async fn drop_indices(pool: &mut sqlx::PgConnection) -> Result<(), sqlx::Error> {
+pub async fn drop_indices(pool: &mut PgConnection) -> Result<(), sqlx::Error> {
     query!("DROP INDEX IF EXISTS game_idx")
         .execute(&mut *pool)
         .await?;
@@ -75,7 +75,7 @@ pub async fn drop_indices(pool: &mut sqlx::PgConnection) -> Result<(), sqlx::Err
 }
 
 pub async fn insert_file(
-    pool: &mut sqlx::PgConnection,
+    pool: &mut PgConnection,
     file: String,
     game: String,
 ) -> Result<(), sqlx::Error> {
@@ -103,7 +103,7 @@ pub async fn insert_file(
 
 async fn insert(
     parsed: Pair<'_, Rule>,
-    pool: &mut sqlx::PgConnection,
+    pool: &mut PgConnection,
     game: String,
     parent_id: i32,
     group_id: i32,
@@ -134,7 +134,7 @@ async fn insert(
 
 async fn insert_pair(
     parsed: Pair<'_, Rule>,
-    pool: &mut sqlx::PgConnection,
+    pool: &mut PgConnection,
     game: String,
     parent_id: i32,
     group_id: i32,
