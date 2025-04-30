@@ -92,10 +92,11 @@ pub async fn insert_file(
     .fetch_one(&pool)
     .await?;
 
-    let parent_id = ids.primary_id;
-    let group_id = ids.child_id.unwrap();
+    let primary_id = ids.primary_id;
+    let child_id = ids.child_id.unwrap();
 
-    insert(parsed, pool.clone(), game, parent_id, group_id).await?;
+    insert(parsed, pool.clone(), game, primary_id, child_id).await?;
+    println!("finished inserting: {}, id: {}", filename, primary_id);
     Ok(())
 }
 
@@ -183,7 +184,6 @@ async fn insert_pair(
             .fetch_one(&pool)
             .await?;
 
-            println!("{:#?}", ids);
             let parent_id = ids.primary_id;
             let group_id = ids.child_id.unwrap();
 
