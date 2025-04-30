@@ -1,6 +1,6 @@
 use super::parser::*;
 use pest::iterators::Pair;
-use sqlx::{Pool, Postgres, query};
+use sqlx::{PgConnection, Pool, Postgres, query};
 
 pub async fn initialize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
     query!("DROP TABLE IF EXISTS gamefiles")
@@ -52,30 +52,30 @@ pub async fn finalize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-pub async fn drop_indices(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
+pub async fn drop_indices(pool: &mut sqlx::PgConnection) -> Result<(), sqlx::Error> {
     query!("DROP INDEX IF EXISTS game_idx")
-        .execute(&pool)
+        .execute(&mut *pool)
         .await?;
     query!("DROP INDEX IF EXISTS group_idx")
-        .execute(&pool)
+        .execute(&mut *pool)
         .await?;
     query!("DROP INDEX IF EXISTS key_idx")
-        .execute(&pool)
+        .execute(&mut *pool)
         .await?;
     query!("DROP INDEX IF EXISTS value_idx")
-        .execute(&pool)
+        .execute(&mut *pool)
         .await?;
     query!("DROP INDEX IF EXISTS parent_idx")
-        .execute(&pool)
+        .execute(&mut *pool)
         .await?;
     query!("DROP INDEX IF EXISTS child_idx")
-        .execute(&pool)
+        .execute(&mut *pool)
         .await?;
     Ok(())
 }
 
 pub async fn insert_file(
-    pool: Pool<Postgres>,
+    pool: &mut sqlx::PgConnection,
     file: String,
     game: String,
 ) -> Result<(), sqlx::Error> {
@@ -89,20 +89,20 @@ pub async fn insert_file(
         game,
         filename
     )
-    .fetch_one(&pool)
+    .fetch_one(&mut *pool)
     .await?;
 
     let primary_id = ids.primary_id;
     let child_id = ids.child_id.unwrap();
 
-    insert(parsed, pool.clone(), game, primary_id, child_id).await?;
+    insert(parsed, &mut *pool, game, primary_id, child_id).await?;
     println!("finished inserting: {}, id: {}", filename, primary_id);
     Ok(())
 }
 
 async fn insert(
     parsed: Pair<'_, Rule>,
-    pool: Pool<Postgres>,
+    pool: &mut sqlx::PgConnection,
     game: String,
     parent_id: i32,
     group_id: i32,
@@ -110,29 +110,15 @@ async fn insert(
     for ident in parsed.into_inner() {
         match ident.as_rule() {
             Rule::file => {
-                Box::pin(insert(
-                    ident,
-                    pool.clone(),
-                    game.clone(),
-                    parent_id,
-                    group_id,
-                ))
-                .await?
+                Box::pin(insert(ident, &mut *pool, game.clone(), parent_id, group_id)).await?
             }
             Rule::list => {
-                Box::pin(insert(
-                    ident,
-                    pool.clone(),
-                    game.clone(),
-                    parent_id,
-                    group_id,
-                ))
-                .await?
+                Box::pin(insert(ident, &mut *pool, game.clone(), parent_id, group_id)).await?
             }
             Rule::pair => {
                 Box::pin(insert_pair(
                     ident,
-                    pool.clone(),
+                    &mut *pool,
                     game.clone(),
                     parent_id,
                     group_id,
@@ -147,7 +133,7 @@ async fn insert(
 
 async fn insert_pair(
     parsed: Pair<'_, Rule>,
-    pool: Pool<Postgres>,
+    pool: &mut sqlx::PgConnection,
     game: String,
     parent_id: i32,
     group_id: i32,
@@ -181,7 +167,7 @@ async fn insert_pair(
                 key,
                 parent_id
             )
-            .fetch_one(&pool)
+            .fetch_one(&mut *pool)
             .await?;
 
             let parent_id = ids.primary_id;
@@ -189,7 +175,7 @@ async fn insert_pair(
 
             insert(
                 possible_list.unwrap(),
-                pool.clone(),
+                &mut *pool,
                 game.clone(),
                 parent_id,
                 group_id,
@@ -200,7 +186,7 @@ async fn insert_pair(
         // value is a word
         Some(value) => {
             query!("INSERT INTO gamefiles (game, group_id, key, value, parent_id, child_id) VALUES ($1, $2, $3, $4, $5, $6)", game, group_id, key, value, parent_id, None::<i32>)
-                .execute(&pool)
+                .execute(&mut *pool)
                 .await?;
         }
     }

@@ -25,19 +25,15 @@ async fn main() -> Result<(), sqlx::Error> {
     }
 
     if args.add {
-        database::drop_indices(pool.clone()).await?;
-        let mut handles = Vec::new();
+        let mut tx = pool.begin().await?;
+
+        database::drop_indices(&mut tx).await?;
+
         for file in args.files {
-            handles.push(database::insert_file(
-                pool.clone(),
-                file,
-                args.game.clone().unwrap(),
-            ));
+            database::insert_file(&mut tx, file, args.game.clone().unwrap()).await?;
         }
 
-        for job in handles {
-            job.await?;
-        }
+        tx.commit().await?;
     }
 
     if args.finalize {
