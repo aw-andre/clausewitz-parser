@@ -96,7 +96,8 @@ pub async fn insert_file(
     let child_id = ids.child_id.unwrap();
 
     insert(parsed, &mut *pool, game, primary_id, child_id).await?;
-    println!("finished inserting: {}, id: {}", filename, primary_id);
+    println!("finished inserting: {}", filename);
+    println!("id: {}", primary_id);
     Ok(())
 }
 
