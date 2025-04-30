@@ -21,11 +21,11 @@ pub struct Cli {
     pub finalize: bool,
 
     /// Game name
-    #[arg(long, conflicts_with_all = ["initialize", "delete", "finalize"], required_unless_present_any = ["initialize", "finalize"])]
-    pub game: String,
+    #[arg(long, required_unless_present_any = ["initialize", "finalize"])]
+    pub game: Option<String>,
 
     /// Files to parse
-    #[arg(long, required_if_eq("add", "true"), conflicts_with_all = ["initialize", "delete", "finalize"], num_args = 1, value_parser)]
+    #[arg(long, required_if_eq("add", "true"), num_args = 1.., value_parser)]
     pub files: Vec<String>,
 }
 

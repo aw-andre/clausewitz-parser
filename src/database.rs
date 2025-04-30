@@ -31,22 +31,44 @@ pub async fn initialize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
 }
 
 pub async fn finalize(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
-    query!("CREATE INDEX game_idx ON gamefiles(game)")
+    query!("CREATE INDEX IF NOT EXISTS game_idx ON gamefiles(game)")
         .execute(&pool)
         .await?;
-    query!("CREATE INDEX group_idx ON gamefiles(group_id)")
+    query!("CREATE INDEX IF NOT EXISTS group_idx ON gamefiles(group_id)")
         .execute(&pool)
         .await?;
-    query!("CREATE INDEX key_idx ON gamefiles(game, key)")
+    query!("CREATE INDEX IF NOT EXISTS key_idx ON gamefiles(game, key)")
         .execute(&pool)
         .await?;
-    query!("CREATE INDEX value_idx ON gamefiles(game, value)")
+    query!("CREATE INDEX IF NOT EXISTS value_idx ON gamefiles(game, value)")
         .execute(&pool)
         .await?;
-    query!("CREATE INDEX parent_idx ON gamefiles(parent_id)")
+    query!("CREATE INDEX IF NOT EXISTS parent_idx ON gamefiles(parent_id)")
         .execute(&pool)
         .await?;
-    query!("CREATE UNIQUE INDEX child_idx ON gamefiles(child_id)")
+    query!("CREATE UNIQUE INDEX IF NOT EXISTS child_idx ON gamefiles(child_id)")
+        .execute(&pool)
+        .await?;
+    Ok(())
+}
+
+pub async fn drop_indices(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
+    query!("DROP INDEX IF EXISTS game_idx")
+        .execute(&pool)
+        .await?;
+    query!("DROP INDEX IF EXISTS group_idx")
+        .execute(&pool)
+        .await?;
+    query!("DROP INDEX IF EXISTS key_idx")
+        .execute(&pool)
+        .await?;
+    query!("DROP INDEX IF EXISTS value_idx")
+        .execute(&pool)
+        .await?;
+    query!("DROP INDEX IF EXISTS parent_idx")
+        .execute(&pool)
+        .await?;
+    query!("DROP INDEX IF EXISTS child_idx")
         .execute(&pool)
         .await?;
     Ok(())
