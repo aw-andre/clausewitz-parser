@@ -30,7 +30,7 @@ async fn main() -> Result<(), sqlx::Error> {
 
         tx.commit().await?;
 
-        database::finalize(pool.clone()).await?;
+        database::create_indices(pool.clone()).await?;
     }
     Ok(())
 }
