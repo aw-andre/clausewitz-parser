@@ -5,27 +5,15 @@ use std::fs;
 #[command(version, about, long_about = None)]
 pub struct Cli {
     /// Initialize database
-    #[arg(long, required_unless_present_any = ["add", "delete", "finalize"])]
+    #[arg(long, conflicts_with_all = &["game", "files"])]
     pub initialize: bool,
 
-    /// Add files to database
-    #[arg(long, required_unless_present_any = ["initialize", "delete", "finalize"])]
-    pub add: bool,
-
-    /// Delete database
-    #[arg(long, required_unless_present_any = ["initialize", "add", "finalize"])]
-    pub delete: bool,
-
-    /// Finalize database
-    #[arg(long, required_unless_present_any = ["initialize", "add", "delete"])]
-    pub finalize: bool,
-
     /// Game name
-    #[arg(long, required_unless_present_any = ["initialize", "finalize"])]
+    #[arg(long, required_if_eq("files", "true"))]
     pub game: Option<String>,
 
     /// Files to parse
-    #[arg(long, required_if_eq("add", "true"), num_args = 1.., value_parser)]
+    #[arg(long, required_if_eq("game", "true"), num_args = 1.., value_parser)]
     pub files: Vec<String>,
 }
 
