@@ -12,15 +12,18 @@ pub struct UnparsedFile<'a> {
     pub unparsed: String,
 }
 
+fn latin1_to_utf8(input: &[u8]) -> String {
+    input.iter().map(|&b| b as char).collect()
+}
+
 impl UnparsedFile<'_> {
     pub fn new(filename: &str) -> UnparsedFile {
         UnparsedFile {
             filename,
-            unparsed: String::from_utf8_lossy(
+            unparsed: latin1_to_utf8(
                 &fs::read(filename)
                     .unwrap_or_else(|e| panic!("Error: {} could not be read: {}", filename, e)),
-            )
-            .into_owned(),
+            ),
         }
     }
 
