@@ -32,6 +32,9 @@ pub async fn create_indices(pool: Pool<Postgres>) -> Result<(), sqlx::Error> {
     query!("CREATE INDEX IF NOT EXISTS value_idx ON gamefiles(game, value)")
         .execute(&pool)
         .await?;
+    query!("CREATE INDEX IF NOT EXISTS value_plain_idx ON gamefiles(value)")
+        .execute(&pool)
+        .await?;
     query!("CREATE INDEX IF NOT EXISTS parent_idx ON gamefiles(parent_id)")
         .execute(&pool)
         .await?;
@@ -46,6 +49,9 @@ pub async fn drop_indices(pool: &mut PgConnection) -> Result<(), sqlx::Error> {
         .execute(&mut *pool)
         .await?;
     query!("DROP INDEX IF EXISTS value_idx")
+        .execute(&mut *pool)
+        .await?;
+    query!("DROP INDEX IF EXISTS value_plain_idx")
         .execute(&mut *pool)
         .await?;
     query!("DROP INDEX IF EXISTS parent_idx")
