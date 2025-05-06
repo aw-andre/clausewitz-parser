@@ -34,7 +34,7 @@ Note: Initializing the table will clean up ALL previous entries in the gamefiles
 cargo run --release -- --game '<name>' --files <gamefiles>/**/*.txt
 ```
 
-Note: Adding entries to the table will also clean up previous entries matching the game name. The provided game name is also what will show up if you decide to use this database with [Clausewitz Manifest][https://github.com/aw-andre/clausewitz-manifest].
+Note: Adding entries to the table will also clean up previous entries matching the game name. The provided game name is also what will show up if you decide to use this database with [Clausewitz Manifest](https://github.com/aw-andre/clausewitz-manifest).
 Note: Some .txt files may have to be manually removed as they are not valid Paradox Script. For example, Clausewitz Parser will attempt to parse license files and will panic as it was given invalid input.
 Note: The \*\* option may not always work. If it doesn't work, check your shell's support for recursive globbing.
 
@@ -49,3 +49,4 @@ Some areas of possible improvement include:
 
 - compilation for release builds on various CPU architectures and operating systems
 - speeding up database insertion time (the bulk of runtime can be attributed to database insertion as this program works by letting Postgres return primary keys upon each single-row insertion; this most likely can be done much faster in memory before doing a large multi-row insertion, though program logic would likely have to be implemented for this)
+- testing on other games (I do not currently have the files for other games and this is only tested for EU4; as there is no known public documentation on Paradox Script, I had to account for some syntax edge-cases like quote-delimited lists after testing)
